@@ -18,7 +18,7 @@ from telegram.ext import (
     filters,
 )
 
-# ================= CONFIG =================
+#================ CONFIG =================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = 6729390752
@@ -126,6 +126,81 @@ async def error_handler(update, context):
             )
         except Exception:
             pass
+# ================= FILE HANDLER =================
+
+async def file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    if not update.message or not update.message.document:
+        return
+
+    doc = update.message.document
+    path = os.path.join(UPLOAD_DIR, doc.file_name)
+    await (await doc.get_file()).download_to_drive(path)
+
+    st = USER_STATE.get(uid)
+
+    if st == "RENAMECTC_FILE":
+        USER_DATA[uid]["vcf"] = path
+        USER_STATE[uid] = "RENAMECTC_NAME"
+        await update.message.reply_text("✏️ Enter new contact name")
+
+    elif st == "RENAMEFILE_FILE":
+        USER_DATA[uid]["file"] = path
+        USER_DATA[uid]["ext"] = os.path.splitext(doc.file_name)[1]
+        USER_STATE[uid] = "RENAMEFILE_NAME"
+        await update.message.reply_text("📝 Enter new file name")
+
+    else:
+        await update.message.reply_text("📁 File received")
+
+# ================= TEXT HANDLER =================
+
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id
+    txt = update.message.text.strip()
+    st = USER_STATE.get(uid)
+
+    if st == "RENAMECTC_NAME":
+        src = USER_DATA[uid].get("vcf")
+        if not src or not os.path.exists(src):
+            await update.message.reply_text("❌ File missing")
+            USER_STATE.pop(uid, None)
+            USER_DATA.pop(uid, None)
+            return
+
+        out = src  # keep same filename
+        rename_vcf_contacts(src, out, txt)
+
+        await update.message.reply_document(
+            open(out, "rb"),
+            filename=os.path.basename(out)
+        )
+
+        USER_STATE.pop(uid, None)
+        USER_DATA.pop(uid, None)
+
+    elif st == "RENAMEFILE_NAME":
+        src = USER_DATA[uid].get("file")
+        ext = USER_DATA[uid].get("ext", "")
+        if not src or not os.path.exists(src):
+            await update.message.reply_text("❌ File missing")
+            USER_STATE.pop(uid, None)
+            USER_DATA.pop(uid, None)
+            return
+
+        new_path = os.path.join(UPLOAD_DIR, txt + ext)
+        os.rename(src, new_path)
+
+        await update.message.reply_document(
+            open(new_path, "rb"),
+            filename=txt + ext
+        )
+
+        USER_STATE.pop(uid, None)
+        USER_DATA.pop(uid, None)
+
+    else:
+        await update.message.reply_text("❓ Unknown input")
 
 # ================= START / HELP / STATUS =================
 
