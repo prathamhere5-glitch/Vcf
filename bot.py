@@ -18,7 +18,7 @@ ContextTypes,
 filters,
 )
 
-================= CONFIG =================
+#================= CONFIG =================
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = 6729390752
@@ -37,7 +37,7 @@ BUY_MSG = (
 USER_STATE = defaultdict(str)
 USER_DATA = defaultdict(dict)
 
-================= XLSX =================
+#================= XLSX =================
 
 try:
 from openpyxl import load_workbook
@@ -65,7 +65,7 @@ start_time INTEGER
 """)
 conn.commit()
 
-================= ACCESS =================
+#================= ACCESS =================
 
 def has_access(uid: int) -> bool:
 if uid == OWNER_ID:
@@ -113,7 +113,7 @@ if not row:
 async def deny(update: Update):
 await update.message.reply_text(BUY_MSG, parse_mode="HTML")
 
-================= ERROR =================
+#================= ERROR =================
 
 async def error_handler(update, context):
 print("ERROR:", context.error)
@@ -125,7 +125,7 @@ await update.effective_message.reply_text(
 except:
 pass
 
-================= START / HELP / STATUS =================
+#================= START / HELP / STATUS =================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 await update.message.reply_photo(
@@ -191,7 +191,7 @@ if row and now - row[0] <= TRIAL_DURATION:
 
 await update.message.reply_text(BUY_MSG, parse_mode="HTML")
 
-================= SUDO =================
+#================= SUDO =================
 
 async def addsudo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if update.effective_user.id != OWNER_ID:
@@ -256,7 +256,7 @@ for uid, exp in rows:
 
 await update.message.reply_text(msg, parse_mode="HTML")
 
-================= CORE FUNCTIONS =================
+#================= CORE FUNCTIONS =================
 
 def txt_to_vcf(src, out, name):
 with open(src) as f, open(out, "w") as o:
@@ -313,7 +313,7 @@ f"TEL:{n}\n"
 "END:VCARD\n"
 )
 
-================= COMMANDS =================
+#================= COMMANDS =================
 
 async def cv_txt_to_vcf(update: Update, context: ContextTypes.DEFAULT_TYPE):
 await ensure_trial(update)
@@ -385,7 +385,7 @@ USER_DATA[uid] = {}
 
 await update.message.reply_text("📝 Upload file")
 
-================= FILE HANDLER =================
+#================= FILE HANDLER =================
 
 async def file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 uid = update.effective_user.id
@@ -418,7 +418,7 @@ elif st == "RENAMEFILE_FILE":
     USER_STATE[uid] = "RENAMEFILE_NAME"  
     await update.message.reply_text("Enter new file name")
 
-================= CALLBACKS =================
+#================= CALLBACKS =================
 
 async def done_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 q = update.callback_query
@@ -441,7 +441,7 @@ USER_STATE.pop(uid, None)
 USER_DATA.pop(uid, None)
 await q.message.reply_text("Cancelled")
 
-================= TEXT HANDLER =================
+#================= TEXT HANDLER =================
 
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 uid = update.effective_user.id
@@ -492,8 +492,7 @@ elif st == "RENAMEFILE_NAME":
     await update.message.reply_document(open(out, "rb"))  
     USER_STATE.pop(uid, None)  
     USER_DATA.pop(uid, None)
-
-================= MENU =================
+#================= MENU =================
 
 async def set_commands(app):
 public = [
@@ -518,7 +517,7 @@ await app.bot.set_my_commands(
     scope=BotCommandScopeChat(chat_id=OWNER_ID)  
 )
 
-================= MAIN =================
+#================= MAIN =================
 
 def main():
 app = ApplicationBuilder().token(BOT_TOKEN).build()
